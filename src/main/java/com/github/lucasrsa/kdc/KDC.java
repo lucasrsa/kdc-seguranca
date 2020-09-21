@@ -1,7 +1,13 @@
 package com.github.lucasrsa.kdc;
 
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Random;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 /**
  *
@@ -9,12 +15,12 @@ import java.util.Random;
  */
 public class KDC {
     
-    private ArrayList<String[]> userList;
+    private final ArrayList<String[]> userList = new ArrayList<>();
     
     private String generateKey() {
         int leftLimit = 48; // numeral '0'
         int rightLimit = 122; // letter 'z'
-        int targetStringLength = 80;
+        int targetStringLength = 16;
         Random random = new Random();
 
         return random.ints(leftLimit, rightLimit + 1)
@@ -33,6 +39,17 @@ public class KDC {
         return null;
     }
     
+    private String getUser(byte[] usrId)
+            throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException, Exception
+    {
+        for(String[] user:this.userList){
+            if(user[0].equals(AES.decifra(usrId, user[1]))){
+                return user[1];
+            }
+        }
+        return null;
+    }
+    
     public String newUser(String id) throws Exception {
         if(this.getUser(id) != null){
             throw new Exception("User "+id+" already exists!");
@@ -41,6 +58,22 @@ public class KDC {
         final String[] user = {id, key};
         userList.add(user);
         return key;
+    }
+    
+    public byte[][] startSession(byte[] src, byte[] dst)
+            throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException, Exception
+    {
+        String srcKey = this.getUser(src);
+        String dstKey = this.getUser(dst);
+        if((srcKey == null) || (dstKey == null)){
+            throw new Exception("User not found!");
+        }
+        final String key = this.generateKey();
+        final byte[][] keyPair = {
+            AES.cifra(key, srcKey),
+            AES.cifra(key, dstKey)
+        };
+        return keyPair;
     }
     
 }
