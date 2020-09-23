@@ -22,11 +22,16 @@ public class Main {
             throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException, Exception
     {
         KDC kdc = new KDC();
+        User ana = new User("Ana", kdc);
         User bob = new User("Bob", kdc);
         User alice = new User("Alice", kdc);
         
         bob.communicate(alice);
+        bob.communicate(ana);
+        alice.communicate(ana);
+        alice.communicate(bob);
+        ana.communicate(alice);
+        ana.communicate(bob);
     }
-            
     
 }

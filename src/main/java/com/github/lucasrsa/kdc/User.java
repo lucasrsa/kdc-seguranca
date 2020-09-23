@@ -37,8 +37,10 @@ public class User {
         return AES.cifra(this.masterKey, this.masterKey);
     }
     
-    public String getId(){
-        return this.id;
+    public byte[] getId() 
+            throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException
+    {
+        return AES.cifra(this.id,this.masterKey);
     }
     
     public byte[] startSession(byte[] key) throws Exception {
@@ -56,12 +58,21 @@ public class User {
         }
     }
     
+    public String toString(){
+        return this.id;
+    }
+    
+    public void endSession(){
+        this.sessionKey = null;
+        this.nonce = 0;
+    }
+    
     public void communicate(User dst)
             throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException, Exception
     {
         final byte[][] sessionKeyPair = kdc.startSession(
                 AES.cifra(this.id, this.masterKey), 
-                AES.cifra(dst.getId(),this.masterKey)
+                dst.getId()
         );
         this.sessionKey = AES.decifra(sessionKeyPair[0], this.masterKey);
         this.nonce = Integer.parseInt(AES.decifra(
@@ -69,9 +80,9 @@ public class User {
                 this.sessionKey
         ));
         dst.validateNonce(Auth.parseNonce(this.nonce));
-        System.out.println("Communication successfull!");
-        this.sessionKey = null;
-        this.nonce = 0;
+        System.out.println("Communication between "+this+" and "+dst+" successfull!");
+        this.endSession();
+        dst.endSession();
     }
     
     public User(String id, KDC kdc) throws Exception {

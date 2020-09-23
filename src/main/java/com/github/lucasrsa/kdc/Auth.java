@@ -12,23 +12,23 @@ package com.github.lucasrsa.kdc;
 public class Auth {
     
     private static int function0(int nonce){
-        return nonce;
+        return nonce % 25;
     }
     
     private static int function1(int nonce){
-        return nonce;
+        return nonce / 13;
     }
     
     private static int function2(int nonce){
-        return nonce;
+        return nonce * 21;
     }
     
     private static int function3(int nonce){
-        return nonce;
+        return nonce - 37;
     }
     
     private static int function4(int nonce){
-        return nonce;
+        return nonce + 48;
     }
     
     public static int parseNonce(int nonce){

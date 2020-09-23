@@ -39,12 +39,16 @@ public class KDC {
         return null;
     }
     
-    private String getUser(byte[] usrId)
+    private String getUserKey(byte[] usrId)
             throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException, Exception
     {
         for(String[] user:this.userList){
-            if(user[0].equals(AES.decifra(usrId, user[1]))){
-                return user[1];
+            try{
+                if(user[0].equals(AES.decifra(usrId, user[1]))){ // This assert should always be successfull
+                    return user[1];
+                }
+            }catch(BadPaddingException e){ 
+                // BadPaddingException is thrown when a decoding is attempted with the wrong key, which is expected for all the other users from the list
             }
         }
         return null;
@@ -63,8 +67,8 @@ public class KDC {
     public byte[][] startSession(byte[] src, byte[] dst)
             throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException, Exception
     {
-        String srcKey = this.getUser(src);
-        String dstKey = this.getUser(dst);
+        String srcKey = this.getUserKey(src);
+        String dstKey = this.getUserKey(dst);
         if((srcKey == null) || (dstKey == null)){
             throw new Exception("User not found!");
         }
