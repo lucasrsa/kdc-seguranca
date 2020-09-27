@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.github.lucasrsa.kdc;
 
 import java.io.UnsupportedEncodingException;
@@ -26,6 +21,7 @@ public class Main {
         User bob = new User("Bob", kdc);
         User alice = new User("Alice", kdc);
         
+        // Multiplas execuções foram feitas para testar o dinamismo das funções
         bob.communicate(alice);
         bob.communicate(ana);
         alice.communicate(ana);

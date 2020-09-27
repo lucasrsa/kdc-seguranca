@@ -1,8 +1,3 @@
-/*
- * To change this license header, chose License Headers in Project Properties.
- * To change this template file, chose Tols | Templates
- * and open the template in the editor.
- */
 package com.github.lucasrsa.kdc;
 
 /**
@@ -32,6 +27,7 @@ public class Auth {
     }
     
     public static int parseNonce(int nonce){
+        // Função a ser executada é decidida pelo próprio valor de nonce
         switch (Math.abs(nonce) % 5) {
             case 0:
                 return function0(nonce);

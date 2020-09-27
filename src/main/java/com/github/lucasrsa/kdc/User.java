@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.github.lucasrsa.kdc;
 
 import java.io.UnsupportedEncodingException;
@@ -43,6 +38,7 @@ public class User {
         return AES.cifra(this.id,this.masterKey);
     }
     
+    // Verifica se User está em outra sessão, decifra chave de sessão e gera nounce
     public byte[] startSession(byte[] key) throws Exception {
         if(this.sessionKey != null){
             throw new Exception("User not available");
@@ -52,8 +48,8 @@ public class User {
         return AES.cifra(Integer.toString(this.nonce), this.sessionKey);
     }
     
-    public void validateNonce(int nonce) throws Exception {
-        if(Auth.parseNonce(this.nonce) != nonce){
+    public void validateNonce(byte[] nonce) throws Exception {
+        if(Auth.parseNonce(this.nonce) != Integer.parseInt(AES.decifra(nonce, this.sessionKey))){
             throw new Exception("Nonce not match!");
         }
     }
@@ -61,30 +57,49 @@ public class User {
     public String toString(){
         return this.id;
     }
-    
+
+    // Libera valores de sessão
     public void endSession(){
         this.sessionKey = null;
         this.nonce = 0;
     }
     
+    // Função responsável por toda a comunicação (handshake apenas) entre User A (this) e User B (dst)
     public void communicate(User dst)
             throws IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, InvalidKeyException, Exception
     {
+        // User solicita chave de sessão para KDC
         final byte[][] sessionKeyPair = kdc.startSession(
                 AES.cifra(this.id, this.masterKey), 
                 dst.getId()
         );
+        
+        // Primeira chave do par está cifrada na masterKey de this
         this.sessionKey = AES.decifra(sessionKeyPair[0], this.masterKey);
-        this.nonce = Integer.parseInt(AES.decifra(
-                dst.startSession(sessionKeyPair[1]), 
-                this.sessionKey
-        ));
-        dst.validateNonce(Auth.parseNonce(this.nonce));
+
+        // startSession retorna nonce gerado por dst cifrado na chave de sessão
+        this.nonce = Integer.parseInt(
+                AES.decifra(
+                    // Segunda chave do par está cifrada na masterKey de dst
+                    dst.startSession(sessionKeyPair[1]), 
+                    this.sessionKey
+                )
+        );
+        
+        // Solicita validação de nonce modificado para dst
+        dst.validateNonce(
+                AES.cifra(
+                        Integer.toString(Auth.parseNonce(this.nonce)),
+                        this.sessionKey
+                )
+        );
+        
         System.out.println("Communication between "+this+" and "+dst+" successfull!");
         this.endSession();
         dst.endSession();
     }
     
+    // Construtor de User necessita de KDC para ser adicionado á lista de usuários
     public User(String id, KDC kdc) throws Exception {
         this.id = id;
         this.masterKey = kdc.newUser(id);
